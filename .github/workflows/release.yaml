@@ -2,8 +2,8 @@ name: Create and Publish Node.js Package
 
 on:
   push:
-    tags:
-      - 'v*.*.*'
+    branches:
+      - main
 
 jobs:
   build:
@@ -22,7 +22,7 @@ jobs:
         run: npm install
 
       - name: Build project
-        run: npm run build  # предположим, что ваш скрипт сборки называется "build"
+        run: npm run build
 
       - name: Archive dist folder
         run: tar -czvf dist.tar.gz dist
@@ -49,17 +49,9 @@ jobs:
       - name: Extract artifact
         run: tar -xzvf dist.tar.gz
 
-      - name: Update package version
-        run: |
-          # Извлечение версии из тега
-          VERSION=$(echo $GITHUB_REF | sed 's/refs\/tags\/v//')
-          # Обновление версии в package.json
-          jq --arg v "$VERSION" '.version = $v' package.json > temp.json && mv temp.json package.json
-        shell: bash
-
       - name: Publish to GitHub Packages
         env:
           NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          npm config set @gmelum:registry=https://npm.pkg.github.com
+          npm config set @OWNER:registry=https://npm.pkg.github.com
           npm publish dist --access public
