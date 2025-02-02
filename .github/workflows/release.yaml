@@ -29,4 +29,6 @@ jobs:
         working-directory: ./dist 
         env:
             NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
-        run:  npm publish --provenance --access public
+        run:  |
+            echo "//registry.npmjs.org/:_authToken=${{ secrets.NPM_TOKEN }}" > .npmrc
+            npm publish --access public
