@@ -11,6 +11,9 @@
   "unpkg": "index.cjs",
   "types": "index.d.ts",
   "type": "module",
+  "publishConfig": {
+    "@gmelum:registry": "https://npm.pkg.github.com"
+  },
   "peerDependencies": {
     "solid-js": "^1.7.12"
   }

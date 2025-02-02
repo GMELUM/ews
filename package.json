@@ -5,6 +5,9 @@
     "scripts": {
         "build": "vite build --config config/vite.solid.config.ts"
     },
+    "publishConfig": {
+        "@gmelum:registry": "https://npm.pkg.github.com"
+    },
     "devDependencies": {
         "@msgpack/msgpack": "^3.0.0-beta3",
         "@types/node": "^22.13.0",
