@@ -1,4 +1,4 @@
-name: Publish Node.js Package from dist
+name: Publish Node.js Package to npm
 
 on:
   push:
@@ -24,10 +24,11 @@ jobs:
       - name: Build project
         run: npm run build
 
-      - name: Publish to GitHub Packages
-        working-directory: ./dist 
+      - name: Configure npm for publishing
+        run: echo "//registry.npmjs.org/:_authToken=${{ secrets.NPM_TOKEN }}" > ~/.npmrc
+
+      - name: Publish to npm Registry
+        working-directory: ./dist
         env:
-            NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
-        run:  |
-            echo "//registry.npmjs.org/:_authToken=${{ secrets.NPM_TOKEN }}" > .npmrc
-            npm publish --access public
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+        run: npm publish --access public
