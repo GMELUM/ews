@@ -1,4 +1,4 @@
-name: Create and Publish Node.js Package
+name: Publish Node.js Package from dist
 
 on:
   push:
@@ -6,7 +6,7 @@ on:
       - main
 
 jobs:
-  build:
+  publish:
     runs-on: ubuntu-latest
 
     steps:
@@ -24,34 +24,10 @@ jobs:
       - name: Build project
         run: npm run build
 
-      - name: Archive dist folder
-        run: tar -czvf dist.tar.gz dist
-
-      - name: Upload release artifact
-        uses: actions/upload-artifact@v2
-        with:
-          name: dist-archive
-          path: dist.tar.gz
-
-  publish:
-    runs-on: ubuntu-latest
-    needs: build
-
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v2
-
-      - name: Download release artifact
-        uses: actions/download-artifact@v2
-        with:
-          name: dist-archive
-
-      - name: Extract artifact
-        run: tar -xzvf dist.tar.gz
-
       - name: Publish to GitHub Packages
+        working-directory: ./dist 
         env:
           NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           npm config set @OWNER:registry=https://npm.pkg.github.com
-          npm publish dist --access public
+          npm publish --access public
