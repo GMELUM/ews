@@ -24,13 +24,8 @@ jobs:
       - name: Build project
         run: npm run build
 
-      - name: Login to GitHub Package Registry
-        run: echo "//npm.pkg.github.com/:_authToken=${{secrets.GITHUB_TOKEN}}" > ./dist/.npmrc
-
       - name: Publish to GitHub Packages
         working-directory: ./dist 
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          npm config set @gmelum:registry=https://npm.pkg.github.com
+          npm config set @gmelum:registry=https://npm.pkg.github.com:_authToken=${{secrets.GITHUB_TOKEN}}
           npm publish --access public
