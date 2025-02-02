@@ -36,7 +36,7 @@ export default defineConfig({
             targets: [
                 { src: "LICENSE", dest: "dist" },
                 { src: "README.md", dest: "dist" },
-                { src: "src/solid/package.json", dest: "dist", rename: "solid/package.json" }
+                { src: "src/package.json", dest: "dist", rename: "package.json" }
             ]
         })
     ],

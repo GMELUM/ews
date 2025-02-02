@@ -29,5 +29,5 @@ jobs:
 
       - name: Publish to GitHub Package Registry
         run: |
-            cd published-dist
+            cd dist
             npm publish --registry=https://npm.pkg.github.com/

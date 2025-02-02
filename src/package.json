@@ -1,0 +1,16 @@
+{
+  "name": "@gmelum/ews",
+  "main": "index.js",
+  "module": "index.js",
+  "typings": "index.d.ts",
+  "browser": {
+    "./index.cjs": "index.cjs",
+    "./index.js": "index.js"
+  },
+  "unpkg": "index.cjs",
+  "types": "index.d.ts",
+  "type": "module",
+  "peerDependencies": {
+    "solid-js": "^1.7.12"
+  }
+}
