@@ -1,0 +1,30 @@
+{
+  "compilerOptions": {
+    "strict": true,
+    "target": "esnext",
+    "module": "commonjs",
+    "baseUrl": "../src",
+    "outDir": "builds",
+    "moduleResolution": "node",
+    "allowSyntheticDefaultImports": true,
+    "esModuleInterop": true,
+    "jsx": "preserve",
+    "jsxImportSource": "solid-js",
+    "noEmit": true,
+    "isolatedModules": true,
+    "resolveJsonModule": true,
+    "types": [
+      "./types.d.ts"
+    ]
+  },
+  "include": [
+    "./config/*.ts",
+    "./**/*.ts",
+    "src/index.ts",
+  ],
+  "exclude": [
+    "node_modules",
+    "src/**/*.test.ts",
+    "dist/**/*"
+  ]
+}

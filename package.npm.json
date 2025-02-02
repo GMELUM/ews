@@ -1,0 +1,22 @@
+{
+    "name": "@gmelum/ews",
+    "version": "0.0.1-beta.13",
+    "description": "WebSocket",
+    "license": "MIT",
+    "author": {
+        "name": "GMELUM",
+        "url": "https://gmelum.t.me"
+    },
+    "contributors": [],
+    "repository": {
+        "type": "git",
+        "url": "git+https://github.com/GMELUM/ews"
+    },
+    "keywords": [
+        "ws",
+        "websocket",
+        "socket",
+        "socket.io",
+        "qWebSocket"
+    ]
+}
