@@ -1,18 +1,25 @@
 {
   "compilerOptions": {
-    "strict": true,
     "target": "esnext",
-    "module": "commonjs",
-    "baseUrl": "../src",
-    "outDir": "builds",
-    "moduleResolution": "node",
+    "module": "esnext",
+    "sourceMap": false,
+    "noImplicitAny": true,
+    "strictNullChecks": true,
+    "strictFunctionTypes": true,
+    "noImplicitThis": true,
+    "noUnusedParameters": false,
+    "noImplicitReturns": true,
+    "noUnusedLocals": false,
     "allowSyntheticDefaultImports": true,
     "esModuleInterop": true,
+    "emitDecoratorMetadata": true,
+    "experimentalDecorators": true,
+    "skipLibCheck": true,
+    "declaration": false,
+    "moduleResolution": "node",
+    "resolveJsonModule": true,
     "jsx": "preserve",
     "jsxImportSource": "solid-js",
-    "noEmit": true,
-    "isolatedModules": true,
-    "resolveJsonModule": true,
     "types": [
       "./types.d.ts"
     ]

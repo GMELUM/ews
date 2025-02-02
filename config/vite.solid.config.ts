@@ -1,5 +1,5 @@
 import { defineConfig } from 'vite';
-import { resolve } from 'path'
+import { resolve } from 'path';
 import solidPlugin from 'vite-plugin-solid';
 import copy from 'rollup-plugin-copy';
 
@@ -38,6 +38,6 @@ export default defineConfig({
                 { src: "README.md", dest: "dist" },
                 { src: "src/package.json", dest: "dist", rename: "package.json" }
             ]
-        })
+        }),
     ],
-})
+});
