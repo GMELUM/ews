@@ -23,13 +23,10 @@ jobs:
           registry-url: 'https://npm.pkg.github.com'
           scope: '@gmelum' # Замените на свою организацию или имя пользователя 
 
-      - name: Copy contents of 'dist' folder
-        run: cp -r dist published-dist
-
       - name: Install dependencies
         run: npm ci
 
       - name: Publish to GitHub Packages
-        run: npm publish published-dist
+        run: npm publish
         env:
           NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
