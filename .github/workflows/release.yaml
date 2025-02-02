@@ -29,5 +29,5 @@ jobs:
         env:
           NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          npm config set @OWNER:registry=https://npm.pkg.github.com
+          npm config set @gmelum:registry=https://npm.pkg.github.com
           npm publish --access public
