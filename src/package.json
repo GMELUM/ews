@@ -1,5 +1,6 @@
 {
   "name": "@gmelum/ews",
+  "version": "0.0.1",
   "main": "index.js",
   "module": "index.js",
   "typings": "index.d.ts",
