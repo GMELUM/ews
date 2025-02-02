@@ -1,33 +1,34 @@
-name: Publish to GitHub Package Registry
+name: Publish package to GitHub Packages
 
 on:
-  push:
-    branches:
-      - main
+  release:
+    types: [published]
 
 jobs:
-  publish:
+  build:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v2
+        uses: actions/checkout@v4
 
       - name: Setup Node.js
-        uses: actions/setup-node@v2
+        uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          node-version: '20.x'
+          registry-url: 'https://npm.pkg.github.com'
+          scope: '@gmelum' # Замените на свою организацию или имя пользователя 
+
+      - name: Copy contents of 'dist' folder
+        run: cp -r dist published-dist
 
       - name: Install dependencies
-        run: npm install
+        run: npm ci
 
-      - name: Build package
-        run: npm run build
-
-      - name: Login to GitHub Package Registry
-        run: echo "//npm.pkg.github.com/:_authToken=${{secrets.GITHUB_TOKEN}}" > ~/.npmrc
-
-      - name: Publish to GitHub Package Registry
-        run: |
-            cd dist
-            npm publish --registry=https://npm.pkg.github.com/
+      - name: Publish to GitHub Packages
+        run: npm publish published-dist
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
