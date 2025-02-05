@@ -15,13 +15,12 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      # Setup .npmrc file to publish to npm
       - uses: actions/setup-node@v4
         with:
           node-version: '20.x'
           registry-url: 'https://registry.npmjs.org'
       
-      - run: npm i
+      - run: npm ci
 
       # Build project and copy necessary files to dist
       - run: npm run build
