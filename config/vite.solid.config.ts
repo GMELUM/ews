@@ -9,7 +9,7 @@ export default defineConfig({
         outDir: "../dist",
         emptyOutDir: false,
         rollupOptions: {
-            external: ['solid-js', 'solid-js/store']
+            external: ['solid-js', 'solid-js/store', '@msgpack/msgpack']
         },
         target: "esnext",
         minify: "terser",
@@ -24,7 +24,7 @@ export default defineConfig({
         },
         copyPublicDir: false,
         lib: {
-            name: "websocket",
+            name: "ews",
             entry: "index.ts",
             formats: ['es', 'cjs'],
             fileName: "index"

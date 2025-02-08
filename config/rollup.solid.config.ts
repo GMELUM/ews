@@ -5,7 +5,7 @@ import typescript from '@rollup/plugin-typescript';
 import webWorkerLoader from 'rollup-plugin-web-worker-loader';
 import { RollupOptions } from 'rollup';
 
-const external = ["solid-js"];
+const external = ['solid-js', 'solid-js/store', '@msgpack/msgpack'];
 const extensions = [".js", ".jsx", ".ts", ".tsx"]
 
 const config: RollupOptions[] = [

@@ -144,11 +144,24 @@ class Client {
     public send = (data: [number, string, unknown]) => {
         if (this.client?.readyState === WebSocket.OPEN) {
             try {
-                this.client.send(msgpackEncode(data));
+                return this.client.send(msgpackEncode(data));
             } catch {
-                console.error("Failed to encode message");
-                this.client.send(new Uint8Array());
+                return postMessage([data[0], data[1], {
+                    error: {
+                        code: 0,
+                        message: "Unable to connect to the server. Please check your network connection.",
+                        critical: true
+                    }
+                }]);
             }
+        } else {
+            return postMessage([data[0], data[1], {
+                error: {
+                    code: 0,
+                    message: "Unable to connect to the server. Please check your network connection.",
+                    critical: true
+                }
+            }]);
         }
     };
 }
