@@ -76,3 +76,4 @@ function init<E extends Events, ER extends unknown>(opt: Options): Context<E, ER
 }
 
 export default init;
+export { Status } from "./types";
