@@ -33,7 +33,7 @@ export type Socket = {
 Create a connection to the WebSocket server using the `init` function:
 
 ```typescript
-import { init } from '@elum/ews';
+import init from '@elum/ews';
 
 export const socket = init<Socket>({
     url: "wss://dev.elum.app", // WebSocket server URL
