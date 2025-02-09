@@ -1,15 +1,9 @@
+import { Status } from "./types"
+
 import {
     encode as msgpackEncode,
     decode as msgpackDecode,
 } from "@msgpack/msgpack";
-
-enum Status {
-    CONNECTING,
-    OPEN,
-    CLOSE,
-    ABORT,
-    USER_CLOSED
-}
 
 class Client {
     private client?: WebSocket;
@@ -57,7 +51,7 @@ class Client {
             if (diff > 20000) {
                 this.status = Status.CLOSE;
                 this.client.close();
-                postMessage([0, "close", ""]);
+                postMessage([0, Status.CLOSE, ""]);
                 return;
             }
 
@@ -92,7 +86,7 @@ class Client {
         this.status = Status.OPEN;
         this.lastMessage = Date.now();
         this.startPingInterval();
-        postMessage([0, "open", ""]);
+        postMessage([0, Status.OPEN, ""]);
     };
 
     private handlerClose = () => {
@@ -103,21 +97,21 @@ class Client {
         this.stopPingInterval();
 
         if (!this.autoReconnect) {
-            postMessage([0, "abort", ""]);
+            postMessage([0, Status.ABORT, ""]);
             return;
         }
 
-        postMessage([0, "close", ""]);
+        postMessage([0, Status.CLOSE, ""]);
         this.startTimeout(() => this.connect(), () => {
             this.closeTimeout();
             this.status = Status.ABORT;
-            postMessage([0, "abort", ""]);
+            postMessage([0, Status.ABORT, ""]);
         });
     };
 
     public connect = () => {
         this.status = Status.CONNECTING;
-        postMessage([0, "connecting", ""]);
+        postMessage([0, Status.CONNECTING, ""]);
         this.client = new WebSocket(this.url);
         this.client.binaryType = "arraybuffer";
         this.client.onopen = this.handlerOpen.bind(this);
@@ -137,7 +131,7 @@ class Client {
         }
         this.status = Status.USER_CLOSED;
         this.stopPingInterval();
-        postMessage([0, "close", ""]);
+        postMessage([0, Status.CLOSE, ""]);
         this.closeTimeout();
     };
 

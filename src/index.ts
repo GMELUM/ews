@@ -14,11 +14,12 @@ import {
     Context,
     Events,
     Options,
+    Status,
 } from "./types";
 
-function init<E extends Events>(opt: Options): Context<E> {
+function init<E extends Events, ER extends unknown>(opt: Options): Context<E, ER> {
 
-    const [status, setStatus] = createSignal("disconnected");
+    const [status, setStatus] = createSignal<Status>(Status.CLOSE);
 
     const ctx: CTX = {
 
@@ -31,17 +32,17 @@ function init<E extends Events>(opt: Options): Context<E> {
 
         client: new Worker(),
         requestID: 0,
-        callbackEmitter: new Map<number, Callback<any, "response">>(),
-        callbackEvents: new Set<Callback<any, "response">>(),
+        callbackEmitter: new Map<number, Callback<any, "response", any>>(),
+        callbackEvents: new Set<Callback<any, "response", any>>(),
 
     }
 
     ctx.client.onmessage = (e: MessageEvent<any>) => {
         switch (e.data[1]) {
-            case "connecting":
-            case "open":
-            case "close":
-            case "abort":
+            case Status.CONNECTING:
+            case Status.OPEN:
+            case Status.CLOSE:
+            case Status.ABORT:
                 return setStatus(e.data[1]);
         }
 
@@ -70,7 +71,7 @@ function init<E extends Events>(opt: Options): Context<E> {
         terminate: terminate.bind(ctx) as typeof terminate,
         send: send.bind(ctx) as typeof send,
         onEvents: onEvents.bind(ctx) as typeof onEvents,
-    } as Context<E>
+    } as Context<E, ER>
 
 }
 
