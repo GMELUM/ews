@@ -1,6 +1,5 @@
 {
     "name": "@elum/ws",
-    "version": "0.0.4",
     "type": "module",
     "scripts": {
         "build:solid": "vite build --config config/vite.solid.config.ts",
