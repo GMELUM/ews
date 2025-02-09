@@ -59,7 +59,12 @@ export type Options = {
   autoReconnect: boolean;
 };
 
-export type Result<E, R> = {
-  error: E;
-  response: R;
-};
+export type Result<E, R> =
+  | {
+      error?: undefined;
+      response: R;
+    }
+  | {
+      error: E;
+      response?: undefined;
+    };
