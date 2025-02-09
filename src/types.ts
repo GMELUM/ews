@@ -45,8 +45,8 @@ export type Context<E extends Events, ER extends unknown> = {
     send: {
         <K extends keyof E>(event: K, data: E[K]["request"]): Promise<E[K]["response"]>
         <K extends keyof E>(event: K, data: E[K]["request"]): Promise<E[K]["response"]>
-        <K extends keyof E>(event: K, data: E[K]["request"], callback: (data: E[K]["response"]) => void): void
-        <K extends keyof E>(event: K, data: E[K]["request"], callback: (data: E[K]["response"]) => void): void
+        <K extends keyof E>(event: K, data: E[K]["request"], callback: Callback<E, "response", ER>): void
+        <K extends keyof E>(event: K, data: E[K]["request"], callback: Callback<E, "response", ER>): void
     };
     onEvents: (callback: Callback<E, "response", ER>) => void;
 };
