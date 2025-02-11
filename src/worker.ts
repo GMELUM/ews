@@ -85,6 +85,7 @@ class Client {
     private handlerOpen = () => {
         this.status = Status.OPEN;
         this.lastMessage = Date.now();
+        this.timeoutIndex = 0;
         this.startPingInterval();
         postMessage([0, Status.OPEN, ""]);
     };
