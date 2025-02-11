@@ -5,6 +5,13 @@ import {
     decode as msgpackDecode,
 } from "@msgpack/msgpack";
 
+const ErrorConnection = {
+    error: {
+        code: 0,
+        message: "Unable to connect to the server. Please check your network connection.",
+        critical: true
+    }
+}
 class Client {
     private client?: WebSocket;
     private status: Status = Status.CLOSE;
@@ -77,7 +84,6 @@ class Client {
             }
             postMessage(decoded);
         } catch {
-            console.error("Failed to decode message");
             postMessage(["error", "decode_failed", null]);
         }
     };
@@ -137,26 +143,14 @@ class Client {
     };
 
     public send = (data: [number, string, unknown]) => {
-        if (this.client?.readyState === WebSocket.OPEN) {
-            try {
+        try {
+            if (this.client?.readyState === WebSocket.OPEN) {
                 return this.client.send(msgpackEncode(data));
-            } catch {
-                return postMessage([data[0], data[1], {
-                    error: {
-                        code: 0,
-                        message: "Unable to connect to the server. Please check your network connection.",
-                        critical: true
-                    }
-                }]);
+            } else {
+                return postMessage([data[0], data[1], ErrorConnection]);
             }
-        } else {
-            return postMessage([data[0], data[1], {
-                error: {
-                    code: 0,
-                    message: "Unable to connect to the server. Please check your network connection.",
-                    critical: true
-                }
-            }]);
+        } catch {
+            return postMessage([data[0], data[1], ErrorConnection]);
         }
     };
 }

@@ -45,6 +45,7 @@ function init<E extends Events, ER extends unknown>(opt: Options): Context<E, ER
       emitter(e.data[2]);
       ctx.callbackEmitter.delete(e.data[0]);
     }
+    
   };
 
   ctx.client.postMessage([
