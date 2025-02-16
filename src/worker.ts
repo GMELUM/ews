@@ -106,6 +106,8 @@ class Client {
 
     private handlerClose = (ev: CloseEvent) => {
 
+        console.log(ev.code)
+
         if (ev.code == 4001) {
 
             this.client = undefined;
