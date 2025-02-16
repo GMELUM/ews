@@ -12,6 +12,14 @@ const ErrorConnection = {
         critical: true
     }
 }
+
+const ErrorDublicateConnection = {
+    error: {
+        code: 1,
+        message: "Unable to connect to the server. Please check your network connection.",
+        critical: true
+    }
+}
 class Client {
     private client?: WebSocket;
     private status: Status = Status.CLOSE;
@@ -96,7 +104,19 @@ class Client {
         postMessage([0, Status.OPEN, ""]);
     };
 
-    private handlerClose = () => {
+    private handlerClose = (ev: CloseEvent) => {
+
+        if (ev.code == 4001) {
+
+            this.client = undefined;
+            this.stopPingInterval();
+            this.closeTimeout();
+            this.status = Status.ABORT;
+            postMessage([0, Status.ABORT, ""]);
+
+            return postMessage([0, "dublicate_connection", ErrorDublicateConnection]);
+        }
+
         if (this.status === Status.USER_CLOSED) return;
 
         this.status = Status.CLOSE;
