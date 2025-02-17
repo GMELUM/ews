@@ -1,4 +1,5 @@
 import { Accessor, Setter } from "solid-js";
+import init from ".";
 
 export enum Status {
   CONNECTING,
@@ -6,6 +7,17 @@ export enum Status {
   CLOSE,
   ABORT,
   USER_CLOSED,
+}
+
+type StaticMethods = {
+  "connection.duplicated": {
+    "request": undefined,
+    "response": {
+      code: 0,
+      message: "connection duplicated",
+      critical: true,
+    }
+  },
 }
 
 export type Events = Record<string, Record<"request" | "response" | string, any>>;
@@ -50,7 +62,7 @@ export type Context<E extends Events, ER extends unknown> = {
     <K extends keyof E>(event: K, data: E[K]["request"], callback: (data: Result<ER, E[K]["response"]>) => void): void;
     <K extends keyof E>(event: K, data: E[K]["request"], callback: (data: Result<ER, E[K]["response"]>) => void): void;
   };
-  onEvents: (callback: Callback<E, "response", ER>) => void;
+  onEvents: (callback: Callback<E & StaticMethods, "response", ER>) => void;
 };
 
 export type Options = {
@@ -61,10 +73,10 @@ export type Options = {
 
 export type Result<E, R> =
   | {
-      error?: undefined;
-      response: R;
-    }
+    error?: undefined;
+    response: R;
+  }
   | {
-      error: E;
-      response?: undefined;
-    };
+    error: E;
+    response?: undefined;
+  };

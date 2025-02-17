@@ -116,7 +116,7 @@ class Client {
             this.status = Status.ABORT;
             postMessage([0, Status.ABORT, ""]);
 
-            return postMessage([0, "dublicate_connection", ErrorDublicateConnection]);
+            return postMessage([0, "connection.duplicated", ErrorDublicateConnection]);
         }
 
         if (this.status === Status.USER_CLOSED) return;
