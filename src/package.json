@@ -1,6 +1,6 @@
 {
   "name": "@elum/ews",
-  "version": "0.0.13",
+  "version": "0.0.14",
   "main": "index.js",
   "module": "index.js",
   "typings": "index.d.ts",

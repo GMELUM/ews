@@ -28,6 +28,7 @@ function init<E extends Events, ER extends unknown>(opt: Options): Context<E, ER
   };
 
   ctx.client.onmessage = (e: MessageEvent<any>) => {
+
     switch (e.data[1]) {
       case Status.CONNECTING:
       case Status.OPEN:
@@ -36,16 +37,16 @@ function init<E extends Events, ER extends unknown>(opt: Options): Context<E, ER
         return setStatus(e.data[1]);
     }
 
-    for (const clb of ctx.callbackEvents) {
-      clb({ event: e.data[1], data: e.data[2] });
-    }
-
     const emitter = ctx.callbackEmitter.get(e.data[0]);
     if (emitter) {
       emitter(e.data[2]);
       ctx.callbackEmitter.delete(e.data[0]);
+    } else {
+      for (const clb of ctx.callbackEvents) {
+        clb({ event: e.data[1], data: e.data[2] });
+      }
     }
-    
+
   };
 
   ctx.client.postMessage([
