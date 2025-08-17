@@ -8,7 +8,7 @@ import onEvents from "./hook/onEvent";
 
 import Worker from "./worker?worker&inline";
 
-import { CTX, Callback, CallbackEmitter, Context, Events, Options, Status } from "./types";
+import { type CTX, type Callback, type CallbackEmitter, type Context, type Events, type Options, Status } from "./types";
 
 function init<E extends Events, ER extends unknown>(opt: Options): Context<E, ER> {
   const [status, setStatus] = createSignal<Status>(Status.CLOSE);
@@ -17,6 +17,7 @@ function init<E extends Events, ER extends unknown>(opt: Options): Context<E, ER
     url: opt.url,
     autoConnect: opt.autoConnect,
     autoReconnect: opt.autoReconnect,
+    authData: opt.authData || {},
 
     status: status,
     setStatus: setStatus,
@@ -55,6 +56,7 @@ function init<E extends Events, ER extends unknown>(opt: Options): Context<E, ER
       url: ctx.url,
       autoConnect: ctx.autoConnect,
       autoReconnect: ctx.autoReconnect,
+      authData: ctx.authData,
     },
   ]);
 
@@ -66,6 +68,7 @@ function init<E extends Events, ER extends unknown>(opt: Options): Context<E, ER
     send: send.bind(ctx) as typeof send,
     onEvents: onEvents.bind(ctx) as typeof onEvents,
   } as Context<E, ER>;
+
 }
 
 export default init;

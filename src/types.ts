@@ -1,5 +1,4 @@
-import { Accessor, Setter } from "solid-js";
-import init from ".";
+import { type Accessor, type Setter } from "solid-js";
 
 export enum Status {
   CONNECTING,
@@ -13,12 +12,18 @@ type StaticMethods = {
   "connection.duplicated": {
     "request": undefined,
     "response": {
-      code: 0,
-      message: "connection duplicated",
-      critical: true,
+      error: {
+        key: "DUPLICATE_CONNECTION",
+        message: "Unable to connect to the server. Please check your network connection."
+      }
     }
   },
 }
+
+type SendOptions = {
+  signal?: AbortSignal;
+  timeout?: number;
+};
 
 export type Events = Record<string, Record<"request" | "response" | "event" | string, any>>;
 
@@ -41,6 +46,7 @@ export type CTX = {
   url: string;
   autoConnect: boolean;
   autoReconnect: boolean;
+  authData: any;
 
   status: Accessor<Status>;
   setStatus: Setter<Status>;
@@ -57,10 +63,8 @@ export type Context<E extends Events, ER extends unknown> = {
   disconnect: () => void;
   terminate: () => void;
   send: {
-    <K extends keyof E>(event: K, data: E[K]["request"]): Promise<Result<ER, E[K]["response"]>>;
-    <K extends keyof E>(event: K, data: E[K]["request"]): Promise<Result<ER, E[K]["response"]>>;
-    <K extends keyof E>(event: K, data: E[K]["request"], callback: (data: Result<ER, E[K]["response"]>) => void): void;
-    <K extends keyof E>(event: K, data: E[K]["request"], callback: (data: Result<ER, E[K]["response"]>) => void): void;
+    <K extends keyof E>(event: K, data: E[K]["request"], options?: SendOptions): Promise<Result<ER, E[K]["response"]>>;
+    <K extends keyof E>(event: K, data: E[K]["request"], callback: (data: Result<ER, E[K]["response"]> | SendOptions) => void): void;
   };
   onEvents: (callback: Callback<E & StaticMethods, "event", ER>) => void;
 };
@@ -69,6 +73,7 @@ export type Options = {
   url: string;
   autoConnect: boolean;
   autoReconnect: boolean;
+  authData: AuthData;
 };
 
 export type Result<E, R> =
@@ -80,3 +85,8 @@ export type Result<E, R> =
     error: E;
     response?: undefined;
   };
+
+export type AuthData = {
+  event: string;
+  data: Record<any, any>;
+}

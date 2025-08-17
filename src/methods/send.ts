@@ -1,77 +1,80 @@
 import { CTX, Data, Events, Result } from "../types";
 
+type SendOptions = {
+  signal?: AbortSignal;
+  timeout?: number;
+};
+
+const ErrorAborted = {
+  error: {
+    key: "REQUEST_ABORTED",
+    message: "Request was aborted before sending"
+  }
+};
+
 function send<E extends Events, K extends keyof E, ER extends unknown>(
   this: CTX,
   event: K,
   data: E[K]["request"],
+  options?: SendOptions
 ): Promise<Result<ER, E[K]["response"]>>;
 
 function send<E extends Events, K extends keyof E, ER extends unknown>(
   this: CTX,
   event: K,
   data: E[K]["request"],
-): Promise<Result<ER, E[K]["response"]>>;
-
-function send<E extends Events, K extends keyof E, ER extends unknown>(
-  this: CTX,
-  event: K,
-  data: E[K]["request"],
-  callback: (data: Data<E, "response", ER>["data"]) => void,
+  callback: (data: Data<E, "response", ER>["data"]) => void
 ): void;
 
 function send<E extends Events, K extends keyof E, ER extends unknown>(
   this: CTX,
   event: K,
   data: E[K]["request"],
-): void;
-
-function send<E extends Events, K extends keyof E, ER extends unknown>(
-  this: CTX,
-  event: K,
-  data: Data<E, "response", ER>,
-  callback?: (data: Data<E, "response", ER>["data"]) => void,
+  callbackOrOptions?: ((data: Data<E, "response", ER>["data"]) => void) | SendOptions
 ): Promise<Data<E, "response", ER>["data"]> | void {
   const ID = ++this.requestID;
 
-  if (typeof callback === "function") {
-    const timeoutId = setupTimeout(this, ID, callback);
+  const isCallback = typeof callbackOrOptions === "function";
+  const signal = !isCallback ? callbackOrOptions?.signal : undefined;
+  const timeout = !isCallback ? callbackOrOptions?.timeout ?? 10000 : 10000;
+
+  if (signal?.aborted) {
+    if (isCallback) (callbackOrOptions as any)(ErrorAborted);
+    return Promise.resolve(ErrorAborted as any);
+  }
+
+  const cleanup = () => {
+    this.callbackEmitter.delete(ID);
+  };
+
+  if (isCallback) {
     this.callbackEmitter.set(ID, (response) => {
-      clearTimeout(timeoutId);
-      callback(response);
-      this.callbackEmitter.delete(ID);
+      (callbackOrOptions as any)(response);
+      cleanup();
     });
-    this.client.postMessage([3, [ID, event, data]]);
+
+    this.client.postMessage([3, [ID, event, data, timeout]]);
     return;
   }
 
   return new Promise<Data<E, "response", ER>["data"]>((resolve) => {
-    const timeoutId = setupTimeout(this, ID, resolve);
-
     this.callbackEmitter.set(ID, (response) => {
-      clearTimeout(timeoutId);
       resolve(response);
-      this.callbackEmitter.delete(ID);
+      cleanup();
     });
 
-    this.client.postMessage([3, [ID, event, data]]);
-  });
-};
+    this.client.postMessage([3, [ID, event, data, timeout]]);
 
-function setupTimeout<E extends Events, ER>(
-  ctx: CTX,
-  id: number,
-  resolve: (data: Data<E, "response", ER>["data"]) => void
-) {
-  return setTimeout(() => {
-    ctx.callbackEmitter.delete(id);
-    resolve({
-      error: {
-        code: 1001,
-        message: "Request rejected due to timeout duration",
-        critical: true,
-      },
-    } as unknown as Data<E, "response", ER>["data"]);
-  }, 10000);
+    if (signal) {
+      const abortHandler = () => {
+        this.callbackEmitter.delete(ID);
+        this.client.postMessage([4, ID]);
+        resolve(ErrorAborted as unknown as Data<E, "response", ER>["data"]);
+        signal.removeEventListener("abort", abortHandler);
+      };
+      signal.addEventListener("abort", abortHandler);
+    }
+  });
 }
 
 export default send;
