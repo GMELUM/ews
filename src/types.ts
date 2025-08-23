@@ -6,16 +6,16 @@ export enum Status {
   CLOSE,
   ABORT,
   USER_CLOSED,
+  DUPLICATED
 }
 
 type StaticMethods = {
   "connection.duplicated": {
     "request": undefined,
     "response": {
-      error: {
-        key: "DUPLICATE_CONNECTION",
-        message: "Unable to connect to the server. Please check your network connection."
-      }
+      code: 0,
+      message: "connection duplicated",
+      critical: true,
     }
   },
 }

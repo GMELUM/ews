@@ -1,26 +1,39 @@
 import { AuthData, Status } from "./types";
-import { encode as msgpackEncode, decode as msgpackDecode } from "@msgpack/msgpack";
+import {
+  encode as msgpackEncode,
+  decode as msgpackDecode,
+} from "@msgpack/msgpack";
 
 const ErrorConnection = {
   error: {
-    key: "NOT_CONNECTED",
+    code: 0,
     message: "Unable to connect to the server. Please check your network connection.",
-  },
+    critical: true
+  }
 };
 
-const ErrorDuplicateConnection = {
+const ErrorDublicateConnection = {
   error: {
-    key: "DUPLICATE_CONNECTION",
+    code: 1,
     message: "Unable to connect to the server. Please check your network connection.",
-  },
+    critical: true
+  }
 };
 
 const ErrorTimeout = {
   error: {
-    key: "REQUEST_TIMEOUT",
+    code: 1001,
     message: "Request timed out in worker",
+    critical: true,
   },
-};
+}
+
+const PingBytes = 0xAA
+const PongBytes = 0xAB
+const DuplicateBytes = 0xAC
+const CloseBytes = 0xAD
+const AuthDenyBytes = 0xAE
+const AuthSuccessBytes = 0xAF
 
 class Client {
   private client?: WebSocket;
@@ -36,7 +49,12 @@ class Client {
   private pendingQueue: [number, string, any, number?][] = [];
   private activeTimeouts: Map<number, NodeJS.Timeout> = new Map();
 
-  constructor(private url: string, autoConnect: boolean, private autoReconnect: boolean, private authData: AuthData) {
+  constructor(
+    private url: string,
+    autoConnect: boolean,
+    private autoReconnect: boolean,
+    private authData: AuthData,
+  ) {
     if (autoConnect) this.connect();
   }
 
@@ -50,7 +68,7 @@ class Client {
   };
 
   private authorize = () => {
-    console.log(this.authData);
+    console.log(this.authData)
     this.send([0, this.authData.event, this.authData.data]);
   };
 
@@ -67,6 +85,7 @@ class Client {
   };
 
   public send = (data: [number, string, any, number?]) => {
+
     if (!this.isAuthorized && !data[1].startsWith("auth.")) {
       this.pendingQueue.push(data);
       return;
@@ -98,36 +117,60 @@ class Client {
 
   private handlerMessage = (e: MessageEvent) => {
     try {
-      this.lastMessage = Date.now();
 
       const obfuscated = new Uint8Array(e.data);
+
+      console.log(obfuscated[0])
+
+      switch (obfuscated[0]) {
+        case PingBytes:
+          // ping message
+          console.log("ping")
+          return;
+        case PongBytes:
+          // pong message
+          console.log("pong")
+          return;
+        case AuthSuccessBytes:
+          // success auth message
+          console.log("auth_success")
+          this.onAuthorized();
+          return;
+        case AuthDenyBytes:
+          // deny auth message
+          console.log("auth_deny")
+          return;
+        case DuplicateBytes:
+
+          console.log("duplicated")
+
+          if (this.client) {
+            this.client?.close(1000)
+            // const encoded = new Uint8Array([CloseBytes])
+            // const obfuscated = this.xor(encoded, 77);
+            // this.client.send(obfuscated);
+          }
+
+          this.client = undefined;
+          this.stopPingInterval();
+          this.closeTimeout();
+          this.status = Status.DUPLICATED;
+          postMessage([0, Status.DUPLICATED, ""]);
+          return
+
+      }
+
+      this.lastMessage = Date.now();
+
       const decodedBytes = this.xor(obfuscated, 77);
 
-      if (
-        decodedBytes.length === 3 &&
-        decodedBytes[0] === 0xe2 &&
-        decodedBytes[1] === 0x80 &&
-        decodedBytes[2] === 0xa2
-      ) {
-        return;
-      }
-
       const decoded = msgpackDecode(decodedBytes) as [number | null, string | null, any | null];
-      const [id, event] = decoded;
-
-      if (event === "•") return;
-
-      if (typeof id === "number") {
-        const timeout = this.activeTimeouts.get(id);
+      if (typeof decoded[0] === "number") {
+        const timeout = this.activeTimeouts.get(decoded[0]);
         if (timeout) {
           clearTimeout(timeout);
-          this.activeTimeouts.delete(id);
+          this.activeTimeouts.delete(decoded[0]);
         }
-      }
-
-      if (event === "􁠲") {
-        this.onAuthorized();
-        return;
       }
 
       postMessage(decoded);
@@ -147,18 +190,19 @@ class Client {
   };
 
   private handlerClose = (ev: CloseEvent) => {
-    console.log(ev.code);
 
-    if (ev.code === 4001) {
+    console.log(ev.code, this.status)
+
+    if (
+      this.status === Status.DUPLICATED
+    ) {
       this.client = undefined;
       this.stopPingInterval();
       this.closeTimeout();
-      this.status = Status.ABORT;
-      postMessage([0, Status.ABORT, ""]);
-      return postMessage([0, "connection.duplicated", ErrorDuplicateConnection]);
-    }
-
-    if (this.status === Status.USER_CLOSED) return;
+      this.status = Status.DUPLICATED;
+      postMessage([0, Status.DUPLICATED, ""]);
+      return
+    };
 
     this.status = Status.CLOSE;
     this.client = undefined;
@@ -170,24 +214,21 @@ class Client {
     }
 
     postMessage([0, Status.CLOSE, ""]);
-    this.startTimeout(
-      () => this.connect(),
-      () => {
-        this.closeTimeout();
-        this.status = Status.ABORT;
-        postMessage([0, Status.ABORT, ""]);
-      },
-    );
+    this.startTimeout(() => this.connect(), () => {
+      this.closeTimeout();
+      this.status = Status.ABORT;
+      postMessage([0, Status.ABORT, ""]);
+    });
   };
 
   public connect = () => {
     this.status = Status.CONNECTING;
     postMessage([0, Status.CONNECTING, ""]);
+
     this.client = new WebSocket(this.url);
     this.client.binaryType = "arraybuffer";
     this.client.onopen = this.handlerOpen.bind(this);
     this.client.onclose = this.handlerClose.bind(this);
-    this.client.onerror = this.handlerClose.bind(this);
     this.client.onmessage = this.handlerMessage.bind(this);
   };
 
@@ -195,7 +236,6 @@ class Client {
     if (this.client) {
       this.client.onopen = null;
       this.client.onclose = null;
-      this.client.onerror = null;
       this.client.onmessage = null;
       this.client.close(1000);
       this.client = undefined;
@@ -241,10 +281,14 @@ class Client {
       }
 
       if (diff > 15000) {
-        this.client.send(new Uint8Array([0xaf, 0xd4, 0xeb]));
-        this.pingInterval = setTimeout(pingLoop, 5000); // ⏱ задержка после ping
+
+        const encoded = new Uint8Array([PingBytes])
+        const obfuscated = this.xor(encoded, 77);
+
+        this.client.send(obfuscated);
+        this.pingInterval = setTimeout(pingLoop, 5000); // ⏱ delay after ping
       } else {
-        this.pingInterval = setTimeout(pingLoop, 1000); // обычная проверка
+        this.pingInterval = setTimeout(pingLoop, 1000); // default check
       }
     };
 
@@ -293,4 +337,4 @@ onmessage = (e) => {
   }
 };
 
-export default {} as typeof Worker & { new (): Worker };
+export default {} as typeof Worker & { new(): Worker };
