@@ -118,6 +118,8 @@ class Client {
   private handlerMessage = (e: MessageEvent) => {
     try {
 
+      this.lastMessage = Date.now();
+
       const obfuscated = new Uint8Array(e.data);
 
       console.log(obfuscated[0])
@@ -159,8 +161,6 @@ class Client {
           return
 
       }
-
-      this.lastMessage = Date.now();
 
       const decodedBytes = this.xor(obfuscated, 77);
 
