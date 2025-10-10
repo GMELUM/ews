@@ -4,41 +4,19 @@ import {
   decode as msgpackDecode,
 } from "@msgpack/msgpack";
 
-const ErrorConnection = {
-  error: {
-    code: 0,
-    message: "Unable to connect to the server. Please check your network connection.",
-    critical: true
-  }
-};
-
-const ErrorDublicateConnection = {
-  error: {
-    code: 1,
-    message: "Unable to connect to the server. Please check your network connection.",
-    critical: true
-  }
-};
-
-const ErrorTimeout = {
-  error: {
-    code: 1001,
-    message: "Request timed out in worker",
-    critical: true,
-  },
-}
+const ErrorConnection = { error: { key: "CONNECTION" } };
+const ErrorTimeout = { error: { key: "TIMEOUT" } }
 
 const PingBytes = 0xAA
 const PongBytes = 0xAB
 const DuplicateBytes = 0xAC
-const CloseBytes = 0xAD
+// const CloseBytes = 0xAD
 const AuthDenyBytes = 0xAE
 const AuthSuccessBytes = 0xAF
 
 class Client {
   private client?: WebSocket;
   private status: Status = Status.CLOSE;
-  private isAuthorized = false;
 
   private lastMessage = Date.now();
   private timeoutIndexMax = 5;
@@ -46,7 +24,6 @@ class Client {
   private timeout: NodeJS.Timeout | null = null;
   private pingInterval: NodeJS.Timeout | null = null;
 
-  private pendingQueue: [number, string, any, number?][] = [];
   private activeTimeouts: Map<number, NodeJS.Timeout> = new Map();
 
   constructor(
@@ -58,38 +35,15 @@ class Client {
     if (autoConnect) this.connect();
   }
 
-  public removeFromQueue = (requestID: number) => {
-    this.pendingQueue = this.pendingQueue.filter(([id]) => id !== requestID);
-    const timeout = this.activeTimeouts.get(requestID);
-    if (timeout) {
-      clearTimeout(timeout);
-      this.activeTimeouts.delete(requestID);
-    }
-  };
-
   private authorize = () => {
     this.send([0, this.authData.event, this.authData.data]);
   };
 
   private onAuthorized = () => {
-    this.isAuthorized = true;
     postMessage([0, Status.OPEN, ""]);
-    this.flushQueue();
-  };
-
-  private flushQueue = () => {
-    while (this.pendingQueue.length) {
-      const [id, event, data, timeout] = this.pendingQueue.shift()!;
-      this.send([id, event, data, timeout]);
-    }
   };
 
   public send = (data: [number, string, any, number?]) => {
-
-    if (!this.isAuthorized && !data[1].startsWith("auth.")) {
-      this.pendingQueue.push(data);
-      return;
-    }
 
     try {
       if (this.client?.readyState === WebSocket.OPEN) {
@@ -169,7 +123,6 @@ class Client {
     this.status = Status.OPEN;
     this.lastMessage = Date.now();
     this.timeoutIndex = 0;
-    this.isAuthorized = false;
     this.startPingInterval();
     this.authorize();
   };
@@ -269,9 +222,9 @@ class Client {
         const obfuscated = this.xor(encoded, 77);
 
         this.client.send(obfuscated);
-        this.pingInterval = setTimeout(pingLoop, 5000); // ⏱ delay after ping
+        this.pingInterval = setTimeout(pingLoop, 5000);
       } else {
-        this.pingInterval = setTimeout(pingLoop, 1000); // default check
+        this.pingInterval = setTimeout(pingLoop, 1000);
       }
     };
 
@@ -311,9 +264,6 @@ onmessage = (e) => {
       break;
     case 3:
       client?.send(e.data[1]);
-      break;
-    case 4:
-      client?.removeFromQueue(e.data[1]);
       break;
     default:
       console.warn("Unhandled message:", e.data);

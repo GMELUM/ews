@@ -1,23 +1,4 @@
-import { CTX, Data, Events, Result } from "../types";
-
-type SendOptions = {
-  signal?: AbortSignal;
-  timeout?: number;
-};
-
-const ErrorAborted = {
-  error: {
-    key: "REQUEST_ABORTED",
-    message: "Request was aborted before sending"
-  }
-};
-
-function send<E extends Events, K extends keyof E, ER extends unknown>(
-  this: CTX,
-  event: K,
-  data: E[K]["request"],
-  options?: SendOptions
-): Promise<Result<ER, E[K]["response"]>>;
+import { CTX, Data, Events } from "../types";
 
 function send<E extends Events, K extends keyof E, ER extends unknown>(
   this: CTX,
@@ -30,18 +11,12 @@ function send<E extends Events, K extends keyof E, ER extends unknown>(
   this: CTX,
   event: K,
   data: E[K]["request"],
-  callbackOrOptions?: ((data: Data<E, "response", ER>["data"]) => void) | SendOptions
+  callbackOrOptions?: ((data: Data<E, "response", ER>["data"]) => void)
 ): Promise<Data<E, "response", ER>["data"]> | void {
   const ID = ++this.requestID;
 
   const isCallback = typeof callbackOrOptions === "function";
-  const signal = !isCallback ? callbackOrOptions?.signal : undefined;
-  const timeout = !isCallback ? callbackOrOptions?.timeout ?? 10000 : 10000;
-
-  if (signal?.aborted) {
-    if (isCallback) (callbackOrOptions as any)(ErrorAborted);
-    return Promise.resolve(ErrorAborted as any);
-  }
+  const timeout = 10000;
 
   const cleanup = () => {
     this.callbackEmitter.delete(ID);
@@ -64,16 +39,6 @@ function send<E extends Events, K extends keyof E, ER extends unknown>(
     });
 
     this.client.postMessage([3, [ID, event, data, timeout]]);
-
-    if (signal) {
-      const abortHandler = () => {
-        this.callbackEmitter.delete(ID);
-        this.client.postMessage([4, ID]);
-        resolve(ErrorAborted as unknown as Data<E, "response", ER>["data"]);
-        signal.removeEventListener("abort", abortHandler);
-      };
-      signal.addEventListener("abort", abortHandler);
-    }
   });
 }
 
