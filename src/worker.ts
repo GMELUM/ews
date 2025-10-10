@@ -68,12 +68,12 @@ class Client {
   };
 
   private authorize = () => {
-    console.log(this.authData)
     this.send([0, this.authData.event, this.authData.data]);
   };
 
   private onAuthorized = () => {
     this.isAuthorized = true;
+    postMessage([0, Status.OPEN, ""]);
     this.flushQueue();
   };
 
@@ -122,35 +122,21 @@ class Client {
 
       const obfuscated = new Uint8Array(e.data);
 
-      console.log(obfuscated[0])
-
       switch (obfuscated[0]) {
         case PingBytes:
-          // ping message
-          console.log("ping")
           return;
         case PongBytes:
-          // pong message
-          console.log("pong")
           return;
         case AuthSuccessBytes:
-          // success auth message
-          console.log("auth_success")
           this.onAuthorized();
           return;
         case AuthDenyBytes:
-          // deny auth message
-          console.log("auth_deny")
+          this.client?.close(1000)
+          postMessage([0, Status.DENY, ""]);
           return;
         case DuplicateBytes:
-
-          console.log("duplicated")
-
           if (this.client) {
             this.client?.close(1000)
-            // const encoded = new Uint8Array([CloseBytes])
-            // const obfuscated = this.xor(encoded, 77);
-            // this.client.send(obfuscated);
           }
 
           this.client = undefined;
@@ -185,13 +171,10 @@ class Client {
     this.timeoutIndex = 0;
     this.isAuthorized = false;
     this.startPingInterval();
-    postMessage([0, Status.OPEN, ""]);
     this.authorize();
   };
 
   private handlerClose = (ev: CloseEvent) => {
-
-    console.log(ev.code, this.status)
 
     if (
       this.status === Status.DUPLICATED

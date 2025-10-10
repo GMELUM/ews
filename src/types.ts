@@ -6,7 +6,8 @@ export enum Status {
   CLOSE,
   ABORT,
   USER_CLOSED,
-  DUPLICATED
+  DUPLICATED,
+  DENY,
 }
 
 type StaticMethods = {
