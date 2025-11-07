@@ -1,13 +1,13 @@
 import { type Accessor, type Setter } from "solid-js";
 
 export enum Status {
-  CONNECTING,
-  OPEN,
-  CLOSE,
-  ABORT,
-  USER_CLOSED,
-  DUPLICATED,
-  DENY,
+  CONNECTING,    // 0 — Начато подключение
+  OPEN,          // 1 — Соединение установлено
+  CLOSE,         // 2 — Соединение закрыто (сервером, сетью, по таймауту)
+  ABORT,         // 3 — Не удалось переподключиться
+  USER_CLOSED,   // 4 — Пользователь вызвал disconnect()
+  DUPLICATED,    // 5 — Сервер закрыл из-за дубликата
+  TERMINATED,    // 6 — Worker принудительно завершён
 }
 
 type StaticMethods = {
@@ -47,7 +47,6 @@ export type CTX = {
   url: string;
   autoConnect: boolean;
   autoReconnect: boolean;
-  authData: any;
 
   status: Accessor<Status>;
   setStatus: Setter<Status>;
@@ -74,7 +73,6 @@ export type Options = {
   url: string;
   autoConnect: boolean;
   autoReconnect: boolean;
-  authData: AuthData;
 };
 
 export type Result<E, R> =
@@ -86,8 +84,3 @@ export type Result<E, R> =
     error: E;
     response?: undefined;
   };
-
-export type AuthData = {
-  event: string;
-  data: Record<any, any>;
-}

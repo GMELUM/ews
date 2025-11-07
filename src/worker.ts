@@ -1,4 +1,4 @@
-import { AuthData, Status } from "./types";
+import { Status } from "./types";
 import {
   encode as msgpackEncode,
   decode as msgpackDecode,
@@ -10,9 +10,6 @@ const ErrorTimeout = { error: { key: "TIMEOUT" } }
 const PingBytes = 0xAA
 const PongBytes = 0xAB
 const DuplicateBytes = 0xAC
-// const CloseBytes = 0xAD
-const AuthDenyBytes = 0xAE
-const AuthSuccessBytes = 0xAF
 
 class Client {
   private client?: WebSocket;
@@ -30,18 +27,9 @@ class Client {
     private url: string,
     autoConnect: boolean,
     private autoReconnect: boolean,
-    private authData: AuthData,
   ) {
     if (autoConnect) this.connect();
   }
-
-  private authorize = () => {
-    this.send([0, this.authData.event, this.authData.data]);
-  };
-
-  private onAuthorized = () => {
-    postMessage([0, Status.OPEN, ""]);
-  };
 
   public send = (data: [number, string, any, number?]) => {
 
@@ -81,13 +69,6 @@ class Client {
           return;
         case PongBytes:
           return;
-        case AuthSuccessBytes:
-          this.onAuthorized();
-          return;
-        case AuthDenyBytes:
-          this.client?.close(1000)
-          postMessage([0, Status.DENY, ""]);
-          return;
         case DuplicateBytes:
           if (this.client) {
             this.client?.close(1000)
@@ -124,7 +105,7 @@ class Client {
     this.lastMessage = Date.now();
     this.timeoutIndex = 0;
     this.startPingInterval();
-    this.authorize();
+    postMessage([0, Status.OPEN, ""]);
   };
 
   private handlerClose = (ev: CloseEvent) => {
@@ -168,6 +149,20 @@ class Client {
     this.client.onmessage = this.handlerMessage.bind(this);
   };
 
+  public terminated = () => {
+    if (this.client) {
+      this.client.onopen = null;
+      this.client.onclose = null;
+      this.client.onmessage = null;
+      this.client.close(1000);
+      this.client = undefined;
+    }
+    this.status = Status.TERMINATED;
+    this.stopPingInterval();
+    this.closeTimeout();
+    postMessage([0, Status.TERMINATED, ""]);
+  };
+
   public disconnect = () => {
     if (this.client) {
       this.client.onopen = null;
@@ -179,7 +174,7 @@ class Client {
     this.status = Status.USER_CLOSED;
     this.stopPingInterval();
     this.closeTimeout();
-    postMessage([0, Status.CLOSE, ""]);
+    postMessage([0, Status.USER_CLOSED, ""]);
   };
 
   private closeTimeout = () => {
@@ -254,7 +249,7 @@ let client: Client | null = null;
 onmessage = (e) => {
   switch (e.data[0]) {
     case 0:
-      client = new Client(e.data[1].url, e.data[1].autoConnect, e.data[1].autoReconnect, e.data[1].authData);
+      client = new Client(e.data[1].url, e.data[1].autoConnect, e.data[1].autoReconnect);
       break;
     case 1:
       client?.connect();
@@ -263,6 +258,11 @@ onmessage = (e) => {
       client?.disconnect();
       break;
     case 3:
+      client?.terminated();
+      client = null;
+      close();
+      break;
+    case 4:
       client?.send(e.data[1]);
       break;
     default:

@@ -18,27 +18,23 @@ function send<E extends Events, K extends keyof E, ER extends unknown>(
   const isCallback = typeof callbackOrOptions === "function";
   const timeout = 10000;
 
-  const cleanup = () => {
-    this.callbackEmitter.delete(ID);
-  };
-
   if (isCallback) {
     this.callbackEmitter.set(ID, (response) => {
       (callbackOrOptions as any)(response);
-      cleanup();
+      this.callbackEmitter.delete(ID);
     });
 
-    this.client.postMessage([3, [ID, event, data, timeout]]);
+    this.client.postMessage([4, [ID, event, data, timeout]]);
     return;
   }
 
   return new Promise<Data<E, "response", ER>["data"]>((resolve) => {
     this.callbackEmitter.set(ID, (response) => {
       resolve(response);
-      cleanup();
+      this.callbackEmitter.delete(ID);
     });
 
-    this.client.postMessage([3, [ID, event, data, timeout]]);
+    this.client.postMessage([4, [ID, event, data, timeout]]);
   });
 }
 

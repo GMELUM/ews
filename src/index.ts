@@ -17,7 +17,6 @@ function init<E extends Events, ER extends unknown>(opt: Options): Context<E, ER
     url: opt.url,
     autoConnect: opt.autoConnect,
     autoReconnect: opt.autoReconnect,
-    authData: opt.authData || {},
 
     status: status,
     setStatus: setStatus,
@@ -36,8 +35,10 @@ function init<E extends Events, ER extends unknown>(opt: Options): Context<E, ER
       case Status.CLOSE:
       case Status.ABORT:
       case Status.DUPLICATED:
-      case Status.DENY:
         return setStatus(e.data[1]);
+      case Status.TERMINATED:
+        setStatus(e.data[1]);
+        return ctx.client.terminate();
     }
 
     const emitter = ctx.callbackEmitter.get(e.data[0]);
@@ -58,7 +59,6 @@ function init<E extends Events, ER extends unknown>(opt: Options): Context<E, ER
       url: ctx.url,
       autoConnect: ctx.autoConnect,
       autoReconnect: ctx.autoReconnect,
-      authData: ctx.authData,
     },
   ]);
 

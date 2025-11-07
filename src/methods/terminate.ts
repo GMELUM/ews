@@ -1,6 +1,7 @@
-import { CTX } from "../types"
+import { CTX } from "../types";
 
 function terminate(this: CTX) {
-    this.client.terminate();
+    this.client.postMessage([3]);
 }
+
 export default terminate;
