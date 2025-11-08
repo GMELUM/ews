@@ -34,6 +34,7 @@ function init<E extends Events, ER extends unknown>(opt: Options): Context<E, ER
       case Status.OPEN:
       case Status.CLOSE:
       case Status.ABORT:
+      case Status.USER_CLOSED:
       case Status.DUPLICATED:
         return setStatus(e.data[1]);
       case Status.TERMINATED:

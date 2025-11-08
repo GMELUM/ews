@@ -32,7 +32,6 @@ class Client {
   }
 
   public send = (data: [number, string, any, number?]) => {
-
     try {
       if (this.client?.readyState === WebSocket.OPEN) {
         const [id, event, payload, timeout] = data;
