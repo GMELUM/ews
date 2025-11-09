@@ -79,7 +79,6 @@ class Client {
           this.status = Status.DUPLICATED;
           postMessage([0, Status.DUPLICATED, ""]);
           return
-
       }
 
       const decodedBytes = this.xor(obfuscated, 77);
@@ -120,21 +119,22 @@ class Client {
       return
     };
 
-    this.status = Status.CLOSE;
     this.client = undefined;
     this.stopPingInterval();
 
-    if (!this.autoReconnect) {
-      postMessage([0, Status.ABORT, ""]);
-      return;
+    this.status = Status.CLOSE;
+    postMessage([0, Status.CLOSE, ""]);
+
+    if (this.autoReconnect) {
+      this.startTimeout(
+        () => this.connect(),
+        () => {
+          this.closeTimeout();
+          this.status = Status.ABORT;
+          postMessage([0, Status.ABORT, ""]);
+        });
     }
 
-    postMessage([0, Status.CLOSE, ""]);
-    this.startTimeout(() => this.connect(), () => {
-      this.closeTimeout();
-      this.status = Status.ABORT;
-      postMessage([0, Status.ABORT, ""]);
-    });
   };
 
   public connect = () => {
